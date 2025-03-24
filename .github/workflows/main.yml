@@ -52,10 +52,10 @@ jobs:
 
       - name: Validate URLs in Parallel
         run: |
-          cat urls.txt | xargs -P10 -I {} sh -c '
+          cat urls.txt | xargs -P10 -I {} bash -c '
             echo "Checking {}";
             status_code=$(curl -o /dev/null -s -w "%{http_code}" "{}");
-            if [[ "$status_code" -ne 200 ]]; then
+            if [ "$status_code" -ne 200 ]; then
               echo "::error::URL {} returned status code $status_code";
               exit 1;
             fi

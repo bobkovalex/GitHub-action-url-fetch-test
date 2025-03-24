@@ -1,0 +1,62 @@
+name: Validate All Sitemap URLs
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Runs daily at 6 AM UTC
+  workflow_dispatch:  # Allows manual trigger
+  push:
+    branches:
+    - master
+
+jobs:
+  validate-sitemaps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Define Categories
+        run: |
+          echo "CATEGORIES=image viewer merger editor converter" >> $GITHUB_ENV
+
+      - name: Fetch Sitemap Indexes
+        run: |
+          > sitemap_list.txt  # Clear previous sitemaps if any
+
+          for category in $CATEGORIES; do
+            sitemap_index="https://products.conholdate.app/$category/sitemaps.xml"
+            echo "Fetching $sitemap_index"
+            curl -sSL "$sitemap_index" -o temp_sitemap_index.xml
+            
+            if grep -q "<loc>" temp_sitemap_index.xml; then
+              grep -oP '(?<=<loc>).*?(?=</loc>)' temp_sitemap_index.xml >> sitemap_list.txt
+            else
+              echo "::warning:: No sitemaps found for $category"
+            fi
+          done
+          echo "Extracted all sitemaps."
+
+      - name: Fetch All Sitemaps and Extract URLs
+        run: |
+          > urls.txt  # Clear previous URLs if any
+          
+          while IFS= read -r sitemap; do
+            echo "Fetching $sitemap"
+            curl -sSL "$sitemap" -o temp_sitemap.xml
+            
+            if grep -q "<loc>" temp_sitemap.xml; then
+              grep -oP '(?<=<loc>).*?(?=</loc>)' temp_sitemap.xml >> urls.txt
+            else
+              echo "::warning:: No URLs found in $sitemap"
+            fi
+          done < sitemap_list.txt
+          echo "Extracted all URLs from sitemaps."
+
+      - name: Validate URLs in Parallel
+        run: |
+          cat urls.txt | xargs -P10 -I {} sh -c '
+            echo "Checking {}";
+            status_code=$(curl -o /dev/null -s -w "%{http_code}" "{}");
+            if [[ "$status_code" -ne 200 ]]; then
+              echo "::error::URL {} returned status code $status_code";
+              exit 1;
+            fi
+          '

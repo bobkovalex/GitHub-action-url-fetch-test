@@ -15,14 +15,14 @@ jobs:
     steps:
       - name: Define Categories
         run: |
-          echo "CATEGORIES=image viewer merger editor converter" >> $GITHUB_ENV
+          echo "CATEGORIES=image viewer merger editor convertion" >> $GITHUB_ENV
 
       - name: Fetch Sitemap Indexes
         run: |
           > sitemap_list.txt  # Clear previous sitemaps if any
 
           for category in $CATEGORIES; do
-            sitemap_index="https://products.conholdate.app/$category/sitemaps.xml"
+            sitemap_index="https://qa.products.conholdate.app/$category/sitemaps.xml"
             echo "Fetching $sitemap_index"
             curl -sSL "$sitemap_index" -o temp_sitemap_index.xml
             

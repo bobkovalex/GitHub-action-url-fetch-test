@@ -1,12 +1,7 @@
 name: Validate All Sitemap URLs
 
 on:
-  schedule:
-    - cron: '0 6 * * *'  # Runs daily at 6 AM UTC
   workflow_dispatch:  # Allows manual trigger
-  push:
-    branches:
-    - master
 
 jobs:
   validate-sitemaps:

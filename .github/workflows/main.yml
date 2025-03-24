@@ -53,10 +53,16 @@ jobs:
       - name: Validate URLs in Parallel
         run: |
           cat urls.txt | xargs -P10 -I {} bash -c '
-            echo "Checking {}";
             status_code=$(curl -o /dev/null -s -w "%{http_code}" "{}");
             if [ "$status_code" -ne 200 ]; then
-              echo "::error::URL {} returned status code $status_code";
-              exit 1;
+              echo "::error:: {} returned status code $status_code"
+              echo "{}" >> failed_urls.txt  # Save failed URLs
             fi
           '
+
+      - name: Check for Failures
+        run: |
+          if [ -s failed_urls.txt ]; then
+            echo "Some URLs failed. See failed_urls.txt"
+            exit 1
+          fi
